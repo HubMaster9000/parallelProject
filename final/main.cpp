@@ -44,7 +44,8 @@ void shuffle(int *array, size_t n)
 
 int main(int argc, const char * argv[]) {
 
-    static const int numInputs = 2;
+    // static const int numInputs = 2;
+    static const int numInputs = 30;
     static const int numHiddenNodes = 2;
     static const int numOutputs = 1;
 
@@ -59,9 +60,10 @@ int main(int argc, const char * argv[]) {
     double hiddenWeights[numInputs][numHiddenNodes];
     double outputWeights[numHiddenNodes][numOutputs];
 
-    static const int numTrainingSets = 4;
-    double training_inputs[numTrainingSets][numInputs] = { {0.0f,0.0f},{1.0f,0.0f},{0.0f,1.0f},{1.0f,1.0f} };
-    double training_outputs[numTrainingSets][numOutputs] = { {0.0f},{1.0f},{1.0f},{0.0f} };
+    static const int numTrainingSets = 512;
+    // static const int numTrainingSets = 4;
+    // double training_inputs[numTrainingSets][numInputs] = { {0.0f,0.0f},{1.0f,0.0f},{0.0f,1.0f},{1.0f,1.0f} };
+    // double training_outputs[numTrainingSets][numOutputs] = { {0.0f},{1.0f},{1.0f},{0.0f} };
 
         struct timespec start_time;
         struct timespec end_time;
