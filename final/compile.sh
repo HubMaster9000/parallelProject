@@ -3,6 +3,6 @@
 
 g++ -o serial main.cpp
 
-gcc -o pre_proccess_serial preProcessor_serial.c
+g++ -o pre_proccess_serial preProcessor_serial.cpp
 
-gcc -o pre_proccess  -fopenmp  preProcessor.c
+g++ -o pre_proccess  -fopenmp  preProcessor.cpp
