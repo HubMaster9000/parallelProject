@@ -2,4 +2,7 @@
 
 
 g++ -o serial main.cpp
-#g++ -o para -fopenmp  main_para.c
+
+gcc -o pre_proccess_serial preProcessor_serial.c
+
+gcc -o pre_proccess  -fopenmp  preProcessor.c

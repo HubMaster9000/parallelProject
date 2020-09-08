@@ -1,5 +1,3 @@
-#define _OPEN_SYS_ITOA_EXT
-#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,10 +22,7 @@ int main() {
         movieNames[id] = title[150];
     }
     fclose(fPointer);
-
-
-       //Get movie reviews
-       for (int i = 1; i < nMovies + 1; i++) {
+    for (int i = 1; i < nMovies + 1; i++) {
            char s[sizeof(i)];
            sprintf( s, "%d", i);
            char file[10];
@@ -49,28 +44,26 @@ int main() {
            strcat(prefix2, file);
        FILE *fPointer2;
        fPointer2 = fopen(prefix2, "r");
-
        char singleLine[150];
-       int userId;
-       int rating;
-       bool firstRow = true;
-       // read line by line till end of file
-       while( fscanf(fPointer2, "%[^,],%[^,],%s\n", &userId, &rating) == 1 ) {
-           //Check for exess user id, skip first row
-           if (!firstRow) {
-               if ( userId > 2700000 ) {
-                   printf("Add more users! User id: %d", userId);
-               } else {
-                   ratings[userId][i] = rating;
-               }
-           }
-           if (firstRow == true) {
-               firstRow = false;
-           }
-       }
-       fclose(fPointer2);
-   }
-
-   return 0;
+ int userId;
+ int rating;
+ bool firstRow = true;
+ // read line by line till end of file
+ while( fscanf(fPointer2, "%[^,],%[^,],%s\n", &userId, &rating) == 1 ) {
+     //Check for exess user id, skip first row
+     if (!firstRow) {
+         if ( userId > 2700000 ) {
+             printf("Add more users! User id: %d", userId);
+         } else {
+             ratings[userId][i] = rating;
+         }
+     }
+     if (firstRow == true) {
+         firstRow = false;
+     }
+ }
+ fclose(fPointer2);
 }
 
+return 0;
+}
