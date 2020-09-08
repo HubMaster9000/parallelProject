@@ -107,7 +107,7 @@ int main(int argc, const char * argv[]) {
                 outputLayer[j] = sigmoid(activation);
             }
 
-            std::cout << "Input:" << training_inputs[i][0] << " " << training_inputs[i][1] << "    Output:" << outputLayer[0] << "    Expected Output: " << training_outputs[i][0] << "\n";
+//            std::cout << "Input:" << training_inputs[i][0] << " " << training_inputs[i][1] << "    Output:" << outputLayer[0] << "    Expected Output: " << training_outputs[i][0] << "\n";
 
            // Backprop
 
