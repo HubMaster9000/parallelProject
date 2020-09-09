@@ -1,4 +1,3 @@
-#define _OPEN_SYS_ITOA_EXT
 #include <omp.h>
 #include <fstream>
 #include <sstream>
@@ -16,7 +15,9 @@ int main() {
     float training_outputs[numTrainingSets][numOutputs];
     float testing_inputs[numTestingSets][numInputs];
     float testing_outputs[numTestingSets][numOutputs];
-    
+ struct timespec start_time;
+        struct timespec end_time;
+        clock_gettime(CLOCK_MONOTONIC,&start_time); 
     std::ifstream file("breast-cancer-data.csv");
     // read line by line till end of file
     for (int row=0; row < 569; ++row) {
@@ -54,5 +55,8 @@ int main() {
             }
         }
     }
-    return 0;
+clock_gettime(CLOCK_MONOTONIC,&end_time);
+    long msec = (end_time.tv_sec - start_time.tv_sec)*1000 + (end_time.tv_nsec - start_time.tv_nsec)/1000000;
+    printf("took to complete %ld\n",msec);  
+  return 0;
 }

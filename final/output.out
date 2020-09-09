@@ -1,13 +1,6 @@
 ------- serial -------
-Final Hidden Weights
-[ [ 3.6721 3.6709 ] [ 5.87448 5.86795 ] ]
-Final Hidden Biases
-[ -5.61072 -2.4229 ]
-Final Output Weights[ -8.0687 7.45091 ]
-Final Output Biases
-[ -3.35558 ]
-took to complete 39
+/var/spool/slurmd/job08611/slurm_script: line 8: 24766 Segmentation fault      (core dumped) ./serial
 ---- serial proc-----
-/var/spool/slurmd/job08600/slurm_script: line 10: 24108 Segmentation fault      (core dumped) ./pre_proccess_serial
+took to complete 36
 ------para proc -----
-/var/spool/slurmd/job08600/slurm_script: line 12: 24110 Segmentation fault      (core dumped) ./pre_proccess
+took to complete 30
