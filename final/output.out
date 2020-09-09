@@ -1,6 +1,6 @@
 ------- serial -------
-/var/spool/slurmd/job08611/slurm_script: line 8: 24766 Segmentation fault      (core dumped) ./serial
+/var/spool/slurmd/job08633/slurm_script: line 8: 46913 Segmentation fault      (core dumped) ./serial
 ---- serial proc-----
-took to complete 36
+took to complete parse 28221ms
 ------para proc -----
-took to complete 30
+took to complete parse 26964ms

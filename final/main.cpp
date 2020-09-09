@@ -11,6 +11,11 @@
 #include <list>
 #include <cstdlib>
 #include <math.h>
+#include <time.h>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+
 
 // Simple network that can learn XOR
 // Feartures : sigmoid activation function, stochastic gradient descent, and mean square error fuction
@@ -22,11 +27,10 @@
 // Arbitrary number of hidden layers
 // Read training end test data from a file
 // Add visualization of training
-// Add recurrence? (maybe that should be a separate project)
 
-float sigmoid(float x) { return 1 / (1 + exp(-x)); }
-float dSigmoid(float x) { return x * (1 - x); }
-float init_weight() { return ((float)rand())/((float)RAND_MAX); }
+double sigmoid(double x) { return 1 / (1 + exp(-x)); }
+double dSigmoid(double x) { return x * (1 - x); }
+double init_weight() { return ((double)rand())/((double)RAND_MAX); }
 void shuffle(int *array, size_t n)
 {
     if (n > 1)
@@ -43,14 +47,18 @@ void shuffle(int *array, size_t n)
 }
 
 int main(int argc, const char * argv[]) {
+     static const int numHiddenNodes = 2;
 
-    static const int numInputs = 30;
-    static const int numHiddenNodes = 2;
-    static const int numOutputs = 1;
+    const double lr = 0.1f;
 
-    const float lr = 0.1f;
+  static const int numOutputs = 1;
 
-    float hiddenLayer[numHiddenNodes];
+    //There are 784 cols that make up each digit
+    static const int numInputs = 784;
+    //Training data has 60k values.
+    static const int numTrainingSets = 60000;
+    static const int numTestingSets = 1000;
+float hiddenLayer[numHiddenNodes];
     float outputLayer[numOutputs];
 
     float hiddenLayerBias[numHiddenNodes];
@@ -58,14 +66,83 @@ int main(int argc, const char * argv[]) {
 
     float hiddenWeights[numInputs][numHiddenNodes];
     float outputWeights[numHiddenNodes][numOutputs];
+  float **training_inputs = (float **)malloc(numTrainingSets * sizeof(float *));
+  float **training_outputs = (float **) malloc(numTrainingSets * sizeof(float *));;
+  float **testing_inputs = (float **)malloc(numTestingSets * sizeof(float *));;
+  float **testing_outputs = (float **)malloc(numTestingSets * sizeof(float *));;
+  struct timespec start_time_parse;
+           struct timespec end_time_parse;
+           clock_gettime(CLOCK_MONOTONIC,&start_time_parse);
+    //Load training data
+    std::ifstream trainFile("mnist_train.csv");
+    // read line by line till end of trainFile
+    for (int row=0; row < numTrainingSets+1; ++row) {
+      //Skip first row (headers)
+        if ( row != 0 ) {
+            std::string trainLine;
+            std::getline(trainFile, trainLine);
+            if ( !trainFile.good() ) {
+                break;
+            }
+            std::stringstream trainIss(trainLine);
+            //Each row has 785 values, first is label
+          training_inputs[row]= (float *)malloc(numInputs * sizeof(float));;
+          training_outputs[row]=(float *) malloc(numOutputs * sizeof(float));
+            for (int col = 0; col < numInputs+1; ++col) {
+                std::string trainVal;
+                std::getline(trainIss, trainVal, ',');
+                //Converter converts string to double
+            std::stringstream trainConvertor(trainVal);
+            //Add first 90% of data to training
+            if (col == 0) {
+                //Add first col to classification
+                trainConvertor >> training_outputs[row][col];
+            } else {
+                //Other idxs go to data
+                trainConvertor >> training_inputs[row][col-1];
+            }
+          }
+                 }
+             }
 
-    static const int numTrainingSets = 512;
-    float training_inputs[numTrainingSets][numInputs] = { {0.0f,0.0f},{1.0f,0.0f},{0.0f,1.0f},{1.0f,1.0f} };
-    float training_outputs[numTrainingSets][numOutputs] = { {0.0f},{1.0f},{1.0f},{0.0f} };
+             //Load testing data
+             std::ifstream testingFile("mnist_test.csv");
+             // read line by line till end of testing file
+             for (int row=0; row < numTestingSets+1; ++row) {
+                 //Skip first row (headers)
+                 if ( row != 0 ) {
+                   std::string testLine;
+                      std::getline(testingFile, testLine);
+                      if ( !testingFile.good() ) {
+                          break;
+                      }
+                      std::stringstream testIss(testLine);
+                      //Each row has 785 values, first is label
+         testing_inputs[row]= (float *)malloc(numInputs * sizeof(float));;
+              testing_outputs[row]= (float *)malloc(numOutputs * sizeof(float));
+               for (int col = 0; col < numInputs+1; ++col) {
+                          std::string testVal;
+                          std::getline(testIss, testVal, ',');
+               //Converter converts string to double
+               std::stringstream testConvertor(testVal);
+               if (col == 0) {
+                   //Add first col to classification
+                   testConvertor >> testing_outputs[row][col];
+               } else {
+                   //Other idxs go to data
+                   testConvertor >> testing_inputs[row][col-1];
+}
+}
+}
+}
 
-        struct timespec start_time;
+clock_gettime(CLOCK_MONOTONIC,&end_time_parse);
+long  msec_parse = (end_time_parse.tv_sec - start_time_parse.tv_sec)*1000 + (end_time_parse.tv_nsec - start_time_parse.tv_nsec)/1000000;
+printf("took to complete parse %dms\n",msec_parse);        
+struct timespec start_time;
         struct timespec end_time;
         clock_gettime(CLOCK_MONOTONIC,&start_time);
+  
     for (int i=0; i<numInputs; i++) {
         for (int j=0; j<numHiddenNodes; j++) {
             hiddenWeights[i][j] = init_weight();
@@ -80,43 +157,43 @@ int main(int argc, const char * argv[]) {
     for (int i=0; i<numOutputs; i++) {
         outputLayerBias[i] = init_weight();
     }
-
-    int trainingSetOrder[] = {0,1,2,3};
-
+    
+//    int trainingSetOrder[] = {0,1,2,3};
+    
     for (int n=0; n < 10000; n++) {
-        shuffle(trainingSetOrder,numTrainingSets);
+  //      shuffle(trainingSetOrder,numTrainingSets);
         for (int x=0; x<numTrainingSets; x++) {
-
-            int i = trainingSetOrder[x];
-
+            
+            int i = x;
+            
             // Forward pass
-
+            
             for (int j=0; j<numHiddenNodes; j++) {
-                float activation=hiddenLayerBias[j];
+               float activation=hiddenLayerBias[j];
                  for (int k=0; k<numInputs; k++) {
                     activation+=training_inputs[i][k]*hiddenWeights[k][j];
                 }
                 hiddenLayer[j] = sigmoid(activation);
             }
-
+            
             for (int j=0; j<numOutputs; j++) {
-                float activation=outputLayerBias[j];
+               float  activation=outputLayerBias[j];
                 for (int k=0; k<numHiddenNodes; k++) {
                     activation+=hiddenLayer[k]*outputWeights[k][j];
                 }
                 outputLayer[j] = sigmoid(activation);
             }
-
-//            std::cout << "Input:" << training_inputs[i][0] << " " << training_inputs[i][1] << "    Output:" << outputLayer[0] << "    Expected Output: " << training_outputs[i][0] << "\n";
-
+            
+            std::cout << "Input:" << training_inputs[i][0] << " " << training_inputs[i][1] << "    Output:" << outputLayer[0] << "    Expected Output: " << training_outputs[i][0] << "\n";
+            
            // Backprop
-
-            float deltaOutput[numOutputs];
+            
+            float  deltaOutput[numOutputs];
             for (int j=0; j<numOutputs; j++) {
                 float errorOutput = (training_outputs[i][j]-outputLayer[j]);
                 deltaOutput[j] = errorOutput*dSigmoid(outputLayer[j]);
             }
-
+            
             float deltaHidden[numHiddenNodes];
             for (int j=0; j<numHiddenNodes; j++) {
                 float errorHidden = 0.0f;
@@ -125,14 +202,14 @@ int main(int argc, const char * argv[]) {
                 }
                 deltaHidden[j] = errorHidden*dSigmoid(hiddenLayer[j]);
             }
-
+            
             for (int j=0; j<numOutputs; j++) {
                 outputLayerBias[j] += deltaOutput[j]*lr;
                 for (int k=0; k<numHiddenNodes; k++) {
                     outputWeights[k][j]+=hiddenLayer[k]*deltaOutput[j]*lr;
                 }
             }
-
+            
             for (int j=0; j<numHiddenNodes; j++) {
                 hiddenLayerBias[j] += deltaHidden[j]*lr;
                 for(int k=0; k<numInputs; k++) {
@@ -141,7 +218,7 @@ int main(int argc, const char * argv[]) {
             }
         }
     }
-
+    
     // Print weights
     std::cout << "Final Hidden Weights\n[ ";
     for (int j=0; j<numHiddenNodes; j++) {
@@ -152,7 +229,7 @@ int main(int argc, const char * argv[]) {
         std::cout << "] ";
     }
     std::cout << "]\n";
-
+    
     std::cout << "Final Hidden Biases\n[ ";
     for (int j=0; j<numHiddenNodes; j++) {
         std::cout << hiddenLayerBias[j] << " ";
@@ -170,11 +247,9 @@ int main(int argc, const char * argv[]) {
     std::cout << "Final Output Biases\n[ ";
     for (int j=0; j<numOutputs; j++) {
         std::cout << outputLayerBias[j] << " ";
-
+        
     }
     std::cout << "]\n";
-    clock_gettime(CLOCK_MONOTONIC,&end_time);
-    long msec = (end_time.tv_sec - start_time.tv_sec)*1000 + (end_time.tv_nsec - start_time.tv_nsec)/1000000;
-    printf("took to complete %ld\n",msec);
     return 0;
 }
+
