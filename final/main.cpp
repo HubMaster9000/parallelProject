@@ -24,9 +24,9 @@
 // Add visualization of training
 // Add recurrence? (maybe that should be a separate project)
 
-float sigmoid(float x) { return 1 / (1 + exp(-x)); }
-float dSigmoid(float x) { return x * (1 - x); }
-float init_weight() { return ((float)rand())/((float)RAND_MAX); }
+double sigmoid(double x) { return 1 / (1 + exp(-x)); }
+double dSigmoid(double x) { return x * (1 - x); }
+double init_weight() { return ((double)rand())/((double)RAND_MAX); }
 void shuffle(int *array, size_t n)
 {
     if (n > 1)
@@ -48,20 +48,20 @@ int main(int argc, const char * argv[]) {
     static const int numHiddenNodes = 2;
     static const int numOutputs = 1;
 
-    const float lr = 0.1f;
+    const double lr = 0.1f;
 
-    float hiddenLayer[numHiddenNodes];
-    float outputLayer[numOutputs];
+    double hiddenLayer[numHiddenNodes];
+    double outputLayer[numOutputs];
 
-    float hiddenLayerBias[numHiddenNodes];
-    float outputLayerBias[numOutputs];
+    double hiddenLayerBias[numHiddenNodes];
+    double outputLayerBias[numOutputs];
 
-    float hiddenWeights[numInputs][numHiddenNodes];
-    float outputWeights[numHiddenNodes][numOutputs];
+    double hiddenWeights[numInputs][numHiddenNodes];
+    double outputWeights[numHiddenNodes][numOutputs];
 
     static const int numTrainingSets = 512;
-    float training_inputs[numTrainingSets][numInputs] = { {0.0f,0.0f},{1.0f,0.0f},{0.0f,1.0f},{1.0f,1.0f} };
-    float training_outputs[numTrainingSets][numOutputs] = { {0.0f},{1.0f},{1.0f},{0.0f} };
+    double training_inputs[numTrainingSets][numInputs] = { {0.0f,0.0f},{1.0f,0.0f},{0.0f,1.0f},{1.0f,1.0f} };
+    double training_outputs[numTrainingSets][numOutputs] = { {0.0f},{1.0f},{1.0f},{0.0f} };
 
         struct timespec start_time;
         struct timespec end_time;
@@ -92,7 +92,7 @@ int main(int argc, const char * argv[]) {
             // Forward pass
 
             for (int j=0; j<numHiddenNodes; j++) {
-                float activation=hiddenLayerBias[j];
+                double activation=hiddenLayerBias[j];
                  for (int k=0; k<numInputs; k++) {
                     activation+=training_inputs[i][k]*hiddenWeights[k][j];
                 }
@@ -100,7 +100,7 @@ int main(int argc, const char * argv[]) {
             }
 
             for (int j=0; j<numOutputs; j++) {
-                float activation=outputLayerBias[j];
+                double activation=outputLayerBias[j];
                 for (int k=0; k<numHiddenNodes; k++) {
                     activation+=hiddenLayer[k]*outputWeights[k][j];
                 }
@@ -111,15 +111,15 @@ int main(int argc, const char * argv[]) {
 
            // Backprop
 
-            float deltaOutput[numOutputs];
+            double deltaOutput[numOutputs];
             for (int j=0; j<numOutputs; j++) {
-                float errorOutput = (training_outputs[i][j]-outputLayer[j]);
+                double errorOutput = (training_outputs[i][j]-outputLayer[j]);
                 deltaOutput[j] = errorOutput*dSigmoid(outputLayer[j]);
             }
 
-            float deltaHidden[numHiddenNodes];
+            double deltaHidden[numHiddenNodes];
             for (int j=0; j<numHiddenNodes; j++) {
-                float errorHidden = 0.0f;
+                double errorHidden = 0.0f;
                 for(int k=0; k<numOutputs; k++) {
                     errorHidden+=deltaOutput[k]*outputWeights[j][k];
                 }
