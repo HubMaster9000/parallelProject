@@ -4,11 +4,11 @@
 #SBATCH --nodes=1
 #SBATCH --time=0:30:00
 #SBATCH --output=output.out
-echo "------- serial -------" 
-./serial
 echo "---- serial proc-----" 
 ./pre_proccess_serial
 echo "------para proc -----" 
-./pre_proccess
+./pre_proccess_prallel
 #echo "------- parallel-------"
-#./para
+#./parallel
+echo "------- serial -------" 
+./serial

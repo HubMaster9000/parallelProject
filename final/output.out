@@ -1,6 +1,6 @@
-------- serial -------
-/var/spool/slurmd/job08633/slurm_script: line 8: 46913 Segmentation fault      (core dumped) ./serial
 ---- serial proc-----
-took to complete parse 28221ms
+took to complete parse 28278ms
 ------para proc -----
-took to complete parse 26964ms
+/var/spool/slurmd/job08655/slurm_script: line 10: ./pre_proccess_prallel: No such file or directory
+------- serial -------
+slurmstepd: error: *** JOB 8655 ON node3 CANCELLED AT 2020-09-09T12:26:42 ***

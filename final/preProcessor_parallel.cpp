@@ -17,7 +17,7 @@ int main() {
     //Training data has 60k values.
     static const int numTrainingSets = 60000;
     static const int numTestingSets = 10000;
-float hiddenLayer[numHiddenNodes];
+    float hiddenLayer[numHiddenNodes];
     float outputLayer[numOutputs];
 
     float hiddenLayerBias[numHiddenNodes];
@@ -35,7 +35,7 @@ float hiddenLayer[numHiddenNodes];
   //Load training data
   std::ifstream trainFile("mnist_train.csv");
   // read line by line till end of trainFile
-#pragma omp parallel for
+#pragma omp parallel for 
   for (int row=0; row < numTrainingSets+1; ++row) {
     //Skip first row (headers)
       if ( row != 0 ) {
@@ -65,14 +65,14 @@ float hiddenLayer[numHiddenNodes];
                   trainConvertor >> training_inputs[row][col-1];
               }
             }
-                   }
-               }
+        }
+    }
 
                //Load testing data
                std::ifstream testingFile("mnist_test.csv");
                // read line by line till end of testing file
 #pragma omp parallel for
-               for (int row=0; row < numTestingSets+1; ++row) {
+              for (int row=0; row < numTestingSets+1; ++row) {
                    //Skip first row (headers)
                    if ( row != 0 ) {
                        std::string testLine;
@@ -86,8 +86,8 @@ float hiddenLayer[numHiddenNodes];
           testing_inputs[row]= (float *)malloc(numInputs * sizeof(float));;
                testing_outputs[row]= (float *)malloc(numOutputs * sizeof(float));       
 	        for (int col = 0; col < numInputs+1; ++col) {
-                           std::string testVal;
-                           std::getline(testIss, testVal, ',');
+                std::string testVal;
+                std::getline(testIss, testVal, ',');
                 //Converter converts string to double
                 std::stringstream testConvertor(testVal);
                 if (col == 0) {
@@ -101,10 +101,9 @@ float hiddenLayer[numHiddenNodes];
         }
     }
 
-
-clock_gettime(CLOCK_MONOTONIC,&end_time_parse);
-   long  msec = (end_time_parse.tv_sec - start_time_parse.tv_sec)*1000 + (end_time_parse.tv_nsec - start_time_parse.tv_nsec)/1000000;
-   printf("took to complete parse %dms\n",msec);
-   return 0;
+    clock_gettime(CLOCK_MONOTONIC,&end_time_parse);
+    long  msec = (end_time_parse.tv_sec - start_time_parse.tv_sec)*1000 + (end_time_parse.tv_nsec - start_time_parse.tv_nsec)/1000000;
+    printf("took to complete parse %dms\n",msec);
+    return 0;
 }
 
