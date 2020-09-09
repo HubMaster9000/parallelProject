@@ -8,14 +8,23 @@ using namespace std;
 // Preprocesser for MNIST digit data
 
 int main() {
+     static const int numHiddenNodes = 2;
+
     //First col has an int to label the number
     static const int numOutputs = 1;
-
     //There are 784 cols that make up each digit
     static const int numInputs = 784;
     //Training data has 60k values.
     static const int numTrainingSets = 60000;
-    static const int numTestingSets = 1000;
+    static const int numTestingSets = 10000;
+float hiddenLayer[numHiddenNodes];
+    float outputLayer[numOutputs];
+
+    float hiddenLayerBias[numHiddenNodes];
+    float outputLayerBias[numOutputs];
+
+    float hiddenWeights[numInputs][numHiddenNodes];
+    float outputWeights[numHiddenNodes][numOutputs];
   float **training_inputs = (float **)malloc(numTrainingSets * sizeof(float *));
   float **training_outputs = (float **) malloc(numTrainingSets * sizeof(float *));;
   float **testing_inputs = (float **)malloc(numTestingSets * sizeof(float *));;
@@ -85,6 +94,7 @@ int main() {
             }
         }
     }
+
 
 clock_gettime(CLOCK_MONOTONIC,&end_time_parse);
    long  msec = (end_time_parse.tv_sec - start_time_parse.tv_sec)*1000 + (end_time_parse.tv_nsec - start_time_parse.tv_nsec)/1000000;

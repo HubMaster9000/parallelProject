@@ -51,6 +51,7 @@ int main(int argc, const char * argv[]) {
 
     const double lr = 0.1f;
 
+
   static const int numOutputs = 1;
 
     //There are 784 cols that make up each digit
@@ -61,8 +62,9 @@ int main(int argc, const char * argv[]) {
 float hiddenLayer[numHiddenNodes];
     float outputLayer[numOutputs];
 
-    float hiddenLayerBias[numHiddenNodes];
-    float outputLayerBias[numOutputs];
+    double hiddenLayerBias[numHiddenNodes];
+    double outputLayerBias[numOutputs];
+
 
     float hiddenWeights[numInputs][numHiddenNodes];
     float outputWeights[numHiddenNodes][numOutputs];
@@ -169,6 +171,7 @@ struct timespec start_time;
             // Forward pass
             
             for (int j=0; j<numHiddenNodes; j++) {
+
                float activation=hiddenLayerBias[j];
                  for (int k=0; k<numInputs; k++) {
                     activation+=training_inputs[i][k]*hiddenWeights[k][j];
@@ -177,6 +180,7 @@ struct timespec start_time;
             }
             
             for (int j=0; j<numOutputs; j++) {
+
                float  activation=outputLayerBias[j];
                 for (int k=0; k<numHiddenNodes; k++) {
                     activation+=hiddenLayer[k]*outputWeights[k][j];
@@ -187,16 +191,20 @@ struct timespec start_time;
             std::cout << "Input:" << training_inputs[i][0] << " " << training_inputs[i][1] << "    Output:" << outputLayer[0] << "    Expected Output: " << training_outputs[i][0] << "\n";
             
            // Backprop
+
             
             float  deltaOutput[numOutputs];
+
+
             for (int j=0; j<numOutputs; j++) {
-                float errorOutput = (training_outputs[i][j]-outputLayer[j]);
+                double errorOutput = (training_outputs[i][j]-outputLayer[j]);
                 deltaOutput[j] = errorOutput*dSigmoid(outputLayer[j]);
             }
+
             
             float deltaHidden[numHiddenNodes];
             for (int j=0; j<numHiddenNodes; j++) {
-                float errorHidden = 0.0f;
+                double errorHidden = 0.0f;
                 for(int k=0; k<numOutputs; k++) {
                     errorHidden+=deltaOutput[k]*outputWeights[j][k];
                 }

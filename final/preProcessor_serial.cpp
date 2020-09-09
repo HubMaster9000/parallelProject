@@ -9,7 +9,6 @@ using namespace std;
 int main() {
     //First col has an int to label the number
     static const int numOutputs = 1;
-
     //There are 784 cols that make up each digit
     static const int numInputs = 784;
     //Training data has 60k values.
@@ -26,7 +25,7 @@ int main() {
     std::ifstream trainFile("mnist_train.csv");
     // read line by line till end of trainFile
     for (int row=0; row < numTrainingSets+1; ++row) {
-      //Skip first row (headers)
+
         if ( row != 0 ) {
             std::string trainLine;
             std::getline(trainFile, trainLine);
@@ -88,7 +87,6 @@ int main() {
 clock_gettime(CLOCK_MONOTONIC,&end_time_parse);
 long  msec = (end_time_parse.tv_sec - start_time_parse.tv_sec)*1000 + (end_time_parse.tv_nsec - start_time_parse.tv_nsec)/1000000;
 printf("took to complete parse %dms\n",msec);
-return 0;
+    return 0;
 }
-
 
