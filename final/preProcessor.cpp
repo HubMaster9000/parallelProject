@@ -35,14 +35,18 @@ float hiddenLayer[numHiddenNodes];
   //Load training data
   std::ifstream trainFile("mnist_train.csv");
   // read line by line till end of trainFile
+#pragma omp parallel for
   for (int row=0; row < numTrainingSets+1; ++row) {
     //Skip first row (headers)
       if ( row != 0 ) {
           std::string trainLine;
+
+#pragma omp critical
+{
           std::getline(trainFile, trainLine);
-          if ( !trainFile.good() ) {
-              break;
-          }
+ }
+         if (trainFile.good() ) continue; 
+
           std::stringstream trainIss(trainLine);
           //Each row has 785 values, first is label
         training_inputs[row]= (float *)malloc(numInputs * sizeof(float));;
@@ -67,14 +71,16 @@ float hiddenLayer[numHiddenNodes];
                //Load testing data
                std::ifstream testingFile("mnist_test.csv");
                // read line by line till end of testing file
+#pragma omp parallel for
                for (int row=0; row < numTestingSets+1; ++row) {
                    //Skip first row (headers)
                    if ( row != 0 ) {
                        std::string testLine;
+			#pragma omp critical
+			{
                        std::getline(testingFile, testLine);
-                       if ( !testingFile.good() ) {
-                           break;
-                       }
+        			}               
+	if ( testingFile.good() ) continue; 
                        std::stringstream testIss(testLine);
                        //Each row has 785 values, first is label
           testing_inputs[row]= (float *)malloc(numInputs * sizeof(float));;
