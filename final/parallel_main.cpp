@@ -1,12 +1,3 @@
-//
-//  main.cpp
-//  NeuralNetwork
-//
-//  Created by Santiago Becerra on 9/15/19.
-//  Copyright © 2019 Santiago Becerra. All rights reserved.
-//
-//
-
 #include <iostream>
 #include <list>
 #include <cstdlib>
@@ -17,18 +8,7 @@
 #include <iostream>
 
 
-// Simple network that can learn XOR
-// Feartures : sigmoid activation function, stochastic gradient descent, and mean square error fuction
-
-// Potential improvements :
-// Different activation functions
-// Batch training
-// Different error funnctions
-// Arbitrary number of hidden layers
-// Read training end test data from a file
-// Add visualization of training
-
-float sigmoid(float x) { return 1 / (1 + exp(-x)); }
+float  sigmoid(float x) { return 1 / (1 + exp(-x)); }
 float dSigmoid(float x) { return x * (1 - x); }
 float init_weight() { return ((float)rand())/((float)RAND_MAX); }
 void shuffle(int *array, size_t n)
@@ -47,107 +27,112 @@ void shuffle(int *array, size_t n)
 }
 
 int main(int argc, const char * argv[]) {
-  static const int numHiddenNodes = 2;
-  const float lr = 0.1f;
+    static const int numHiddenNodes = 2;
 
- //First col has an int to label the number
- static const int numOutputs = 1;
- //There are 784 cols that make up each digit
- static const int numInputs = 784;
- //Training data has 60k values.
- static const int numTrainingSets = 60000;
- static const int numTestingSets = 10000;
- float hiddenLayer[numHiddenNodes];
- float outputLayer[numOutputs];
+    const float lr = 0.1f;
 
- float hiddenLayerBias[numHiddenNodes];
- float outputLayerBias[numOutputs];
 
-    float **hiddenWeights = (float **)malloc(numInputs * sizeof(float *));
+    static const int numOutputs = 1;
 
- float outputWeights[numHiddenNodes][numOutputs];
-float **training_inputs = (float **)malloc(numTrainingSets * sizeof(float *));
-float **training_outputs = (float **) malloc(numTrainingSets * sizeof(float *));;
-float **testing_inputs = (float **)malloc(numTestingSets * sizeof(float *));;
-float **testing_outputs = (float **)malloc(numTestingSets * sizeof(float *));;
-struct timespec start_time_parse;
-      struct timespec end_time_parse;
-      clock_gettime(CLOCK_MONOTONIC,&start_time_parse);
+    //There are 784 cols that make up each digit
+    static const int numInputs = 785;
+    //Training data has 60k values.
+    static const int numTrainingSets = 60000;
+    static const int numTestingSets = 1000;
+    float hiddenLayer[numHiddenNodes];
+    float outputLayer[numOutputs];
+
+    float hiddenLayerBias[numHiddenNodes];
+    float outputLayerBias[numOutputs];
+
+
+    float **hiddenWeights = (float **)calloc(numInputs , sizeof(float *));
+    float outputWeights[numHiddenNodes][numOutputs];
+    float **training_inputs = (float **)calloc(numTrainingSets ,sizeof(float *));
+    float **training_outputs = (float **) calloc(numTrainingSets , sizeof(float *));;
+    float **testing_inputs = (float **)calloc(numTestingSets , sizeof(float *));;
+    float **testing_outputs = (float **)calloc(numTestingSets , sizeof(float *));;
+  struct timespec end_time;
+    struct timespec start_time;
+    struct timespec end_time_parse;
+    clock_gettime(CLOCK_MONOTONIC,&start_time);
+    //Load training data
+  
 //Load training data
-std::ifstream trainFile("mnist_train.csv");
-// read line by line till end of trainFile
-#pragma omp parallel for
-for (int row=0; row < numTrainingSets+1; ++row) {
- //Skip first row (headers)
-   if ( row != 0 ) {
-       std::string trainLine;
+
+  std::ifstream trainFile("mnist_train.csv");
+  // read line by line till end of trainFile
+#pragma omp parallel for 
+  for (int row=0; row < numTrainingSets+1; ++row) {
+    //Skip first row (headers)
+      if ( row != 0 ) {
+          std::string trainLine;
 
 #pragma omp critical
 {
-       std::getline(trainFile, trainLine);
+          std::getline(trainFile, trainLine);
+ }
+         if (trainFile.good() ) continue; 
+
+          std::stringstream trainIss(trainLine);
+          //Each row has 785 values, first is label
+        training_inputs[row]= (float *)calloc(numInputs , sizeof(float));;
+        training_outputs[row]=(float *) calloc(numOutputs , sizeof(float));
+          for (int col = 0; col < numInputs+1; ++col) {
+              std::string trainVal;
+              std::getline(trainIss, trainVal, ',');
+              //Converter converts string to double
+              std::stringstream trainConvertor(trainVal);
+              //Add first 90% of data to training
+              if (col == 0) {
+                  //Add first col to classification
+                  trainConvertor >> training_outputs[row][col];
+              } else {
+                  //Other idxs go to data
+                  trainConvertor >> training_inputs[row][col-1];
+              }
+            }
+        }
+    }
+
+
+             //Load testing data
+               std::ifstream testingFile("mnist_test.csv");
+               // read line by line till end of testing file
+#pragma omp for parallel
+              for (int row=0; row < numTestingSets+1; ++row) {
+                   //Skip first row (headers)
+                   if ( row != 0 ) {
+                       std::string testLine;
+			#pragma omp critical
+			{
+                       std::getline(testingFile, testLine);
+        			}               
+	if ( testingFile.good() ) continue; 
+                       std::stringstream testIss(testLine);
+                       //Each row has 785 values, first is label
+          testing_inputs[row]= (float *)calloc(numInputs , sizeof(float));;
+               testing_outputs[row]= (float *)calloc(numOutputs , sizeof(float));       
+	        for (int col = 0; col < numInputs+1; ++col) {
+                std::string testVal;
+                std::getline(testIss, testVal, ',');
+                //Converter converts string to double
+                std::stringstream testConvertor(testVal);
+                if (col == 0) {
+                    //Add first col to classification
+                    testConvertor >> testing_outputs[row][col];
+                } else {
+                    //Other idxs go to data
+                    testConvertor >> testing_inputs[row][col-1];
+                }
+            }
+        }
+    
+
 }
-      if (trainFile.good() ) continue;
-
-       std::stringstream trainIss(trainLine);
-       //Each row has 785 values, first is label
-     training_inputs[row]= (float *)malloc(numInputs * sizeof(float));;
-     training_outputs[row]=(float *) malloc(numOutputs * sizeof(float));
-       for (int col = 0; col < numInputs+1; ++col) {
-           std::string trainVal;
-           std::getline(trainIss, trainVal, ',');
-           //Converter converts string to double
-           std::stringstream trainConvertor(trainVal);
-           //Add first 90% of data to training
-           if (col == 0) {
-               //Add first col to classification
-               trainConvertor >> training_outputs[row][col];
-           } else {
-               //Other idxs go to data
-               trainConvertor >> training_inputs[row][col-1];
-           }
-         }
-     }
- }
-
-            //Load testing data
-            std::ifstream testingFile("mnist_test.csv");
-            // read line by line till end of testing file
-#pragma omp parallel for
-           for (int row=0; row < numTestingSets+1; ++row) {
-                //Skip first row (headers)
-                if ( row != 0 ) {
-                    std::string testLine;
-   #pragma omp critical
-   {
-                    std::getline(testingFile, testLine);
-           }
-if ( testingFile.good() ) continue;
-                    std::stringstream testIss(testLine);
-                    //Each row has 785 values, first is label
-       testing_inputs[row]= (float *)malloc(numInputs * sizeof(float));;
-            testing_outputs[row]= (float *)malloc(numOutputs * sizeof(float));
-       for (int col = 0; col < numInputs+1; ++col) {
-             std::string testVal;
-             std::getline(testIss, testVal, ',');
-             //Converter converts string to double
-             std::stringstream testConvertor(testVal);
-             if (col == 0) {
-                 //Add first col to classification
-                 testConvertor >> testing_outputs[row][col];
-             } else {
-                 //Other idxs go to data
-                 testConvertor >> testing_inputs[row][col-1];
-             }
-         }
-     }
- }
-
- clock_gettime(CLOCK_MONOTONIC,&end_time_parse);
- long  msec_parse = (end_time_parse.tv_sec - start_time_parse.tv_sec)*1000 + (end_time_parse.tv_nsec - start_time_parse.tv_nsec)/1000000;
- printf("took to complete parse %dms\n",msec_parse);
-    struct timespec start_time;
-    struct timespec end_time;
-    clock_gettime(CLOCK_MONOTONIC,&start_time);
+    clock_gettime(CLOCK_MONOTONIC,&end_time_parse);
+    long  msec_parse = (end_time_parse.tv_sec - start_time.tv_sec)*1000 + (end_time_parse.tv_nsec - start_time.tv_nsec)/1000000;
+    printf("took to complete parse %dms\n",msec_parse);
 
     for (int i=0; i<numInputs; i++) {
             hiddenWeights[i]=(float *) malloc(numHiddenNodes * sizeof(float));
@@ -168,7 +153,7 @@ if ( testingFile.good() ) continue;
 
     // int trainingSetOrder[] = {0,1,2,3};
 
-    for (int n=0; n < 10000; n++) {
+    for (int n=0; n < 50; n++) {
     // shuffle(trainingSetOrder,numTrainingSets);
         for (int x=0; x<numTrainingSets + 1; x++) {
 
@@ -234,15 +219,15 @@ if ( testingFile.good() ) continue;
     }
 
     // Print weights
-    std::cout << "Final Hidden Weights\n[ ";
-    for (int j=0; j<numHiddenNodes; j++) {
-        std::cout << "[ ";
-        for(int k=0; k<numInputs; k++) {
-            std::cout << hiddenWeights[k][j] << " ";
-        }
-        std::cout << "] ";
-    }
-    std::cout << "]\n";
+//    std::cout << "Final Hidden Weights\n[ ";
+  //  for (int j=0; j<numHiddenNodes; j++) {
+    //    std::cout << "[ ";
+      //  for(int k=0; k<numInputs; k++) {
+        //    std::cout << hiddenWeights[k][j] << " ";
+       // }
+       // std::cout << "] ";
+   // }
+   // std::cout << "]\n";
 
     std::cout << "Final Hidden Biases\n[ ";
     for (int j=0; j<numHiddenNodes; j++) {
@@ -264,5 +249,10 @@ if ( testingFile.good() ) continue;
 
     }
     std::cout << "]\n";
-    return 0;
+    clock_gettime(CLOCK_MONOTONIC,&end_time);
+    long  msec_total = (end_time.tv_sec - start_time.tv_sec)*1000 + (end_time.tv_nsec - start_time.tv_nsec)/1000000;
+    printf("took to complete whole program %dms\n",msec_parse);
+
+return 0;
 }
+
