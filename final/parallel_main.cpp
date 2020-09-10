@@ -172,14 +172,14 @@ int main(int argc, const char * argv[]) {
     
     // int trainingSetOrder[] = {0,1,2,3};
     
-    for (int n=0; n < 1000; n++) {
+    for (int n=0; n < 10; n++) {
     // shuffle(trainingSetOrder,numTrainingSets);
         for (int x=0; x<numTrainingSets + 1; x++) {
             
             int i = x;
             if(i != 0){
             // Forward pass
-            
+
             for (int j=0; j<numHiddenNodes; j++) {
 
                float activation=hiddenLayerBias[j];
@@ -188,7 +188,7 @@ int main(int argc, const char * argv[]) {
                 }
                 hiddenLayer[j] = sigmoid(activation);
             }
-            
+
             for (int j=0; j<numOutputs; j++) {
 
                float  activation=outputLayerBias[j];
@@ -197,12 +197,13 @@ int main(int argc, const char * argv[]) {
                 }
                 outputLayer[j] = sigmoid(activation);
             }
-            
             //std::cout << "Input:" << training_inputs[i][0] << " " << training_inputs[i][1] << "    Output:" << outputLayer[0] << "    Expected Output: " << training_outputs[i][0] << "\n";
             
            // Backprop
 
             
+
+
             float  deltaOutput[numOutputs];
 
 
@@ -211,7 +212,6 @@ int main(int argc, const char * argv[]) {
                 deltaOutput[j] = errorOutput*dSigmoid(outputLayer[j]);
             }
 
-            
             float deltaHidden[numHiddenNodes];
             for (int j=0; j<numHiddenNodes; j++) {
                 float errorHidden = 0.0f;
@@ -220,14 +220,14 @@ int main(int argc, const char * argv[]) {
                 }
                 deltaHidden[j] = errorHidden*dSigmoid(hiddenLayer[j]);
             }
-            
+
             for (int j=0; j<numOutputs; j++) {
                 outputLayerBias[j] += deltaOutput[j]*lr;
                 for (int k=0; k<numHiddenNodes; k++) {
                     outputWeights[k][j]+=hiddenLayer[k]*deltaOutput[j]*lr;
                 }
             }
-            
+
             for (int j=0; j<numHiddenNodes; j++) {
                 hiddenLayerBias[j] += deltaHidden[j]*lr;
                 for(int k=0; k<numInputs; k++) {
@@ -236,18 +236,18 @@ int main(int argc, const char * argv[]) {
             }
         }}
     }
-    
+
     // Print weights
-//    std::cout << "Final Hidden Weights\n[ ";
-  //  for (int j=0; j<numHiddenNodes; j++) {
-    //    std::cout << "[ ";
-      //  for(int k=0; k<numInputs; k++) {
-        //    std::cout << hiddenWeights[k][j] << " ";
-       // }
-       // std::cout << "] ";
-   // }
-   // std::cout << "]\n";
-    
+    std::cout << "Final Hidden Weights\n[ ";
+    for (int j=0; j<numHiddenNodes; j++) {
+        std::cout << "[ ";
+        for(int k=0; k<numInputs; k++) {
+            std::cout << hiddenWeights[k][j] << " ";
+        }
+        std::cout << "] ";
+    }
+    std::cout << "]\n";
+
     std::cout << "Final Hidden Biases\n[ ";
     for (int j=0; j<numHiddenNodes; j++) {
         std::cout << hiddenLayerBias[j] << " ";
@@ -265,9 +265,7 @@ int main(int argc, const char * argv[]) {
     std::cout << "Final Output Biases\n[ ";
     for (int j=0; j<numOutputs; j++) {
         std::cout << outputLayerBias[j] << " ";
-        
     }
     std::cout << "]\n";
     return 0;
 }
-

@@ -7,8 +7,8 @@
 #echo "---- serial proc-----" 
 #./pre_proccess_serial
 #echo "------para proc -----" 
-./pre_proccess_parallel
+#./pre_proccess_parallel
 echo "------- parallel-------"
 ./parallel
-echo "------- serial -------" 
+echo "------- serial-------"
 ./serial
