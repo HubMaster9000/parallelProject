@@ -15,7 +15,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
-
+#include <omp.h>
 
 // Simple network that can learn XOR
 // Feartures : sigmoid activation function, stochastic gradient descent, and mean square error fuction
@@ -78,7 +78,7 @@ int main(int argc, const char * argv[]) {
     //Load training data
     std::ifstream trainFile("mnist_train.csv");
     // read line by line till end of trainFile
-    #pragma omp parallel for
+   // #pragma omp parallel for
     for (int row=0; row < numTrainingSets+1; ++row) {
         //Skip first row (headers)
         if ( row != 0 ) {
@@ -114,7 +114,7 @@ int main(int argc, const char * argv[]) {
     //Load testing data
     std::ifstream testingFile("mnist_test.csv");
     // read line by line till end of testing file
-   #pragma omp parallel for
+  // #pragma omp parallel for
     for (int row=0; row < numTestingSets+1; ++row) {
         //Skip first row (headers)
         if ( row != 0 ) {
@@ -152,46 +152,52 @@ int main(int argc, const char * argv[]) {
     struct timespec start_time;
     struct timespec end_time;
     clock_gettime(CLOCK_MONOTONIC,&start_time);
-  
+    #pragma parallel omp for
     for (int i=0; i<numInputs; i++) {
             hiddenWeights[i]=(float *) malloc(numHiddenNodes * sizeof(float));
-
+	#pragma omp parallel for
         for (int j=0; j<numHiddenNodes; j++) {
             hiddenWeights[i][j] = init_weight();
         }
     }
+   #pragma omp parallel for
     for (int i=0; i<numHiddenNodes; i++) {
         hiddenLayerBias[i] = init_weight();
-        for (int j=0; j<numOutputs; j++) {
+        #pragma omp parallel for
+	 for (int j=0; j<numOutputs; j++) {
             outputWeights[i][j] = init_weight();
         }
     }
+    #pragma omp parallel for
     for (int i=0; i<numOutputs; i++) {
         outputLayerBias[i] = init_weight();
     }
     
     // int trainingSetOrder[] = {0,1,2,3};
-    
-    for (int n=0; n < 10; n++) {
+
+   //cannot parallelize this bc each epoch relies on the last    
+    for (int n=0; n < 100; n++) {
     // shuffle(trainingSetOrder,numTrainingSets);
+	#pragma omp parallel for
         for (int x=0; x<numTrainingSets + 1; x++) {
             
             int i = x;
             if(i != 0){
             // Forward pass
-
+	   #pragma omp parallel for
             for (int j=0; j<numHiddenNodes; j++) {
-
                float activation=hiddenLayerBias[j];
+		#pragma omp parallel for reduction (+:activation)
                  for (int k=0; k<numInputs; k++) {
                     activation+=training_inputs[i][k]*hiddenWeights[k][j];
                 }
                 hiddenLayer[j] = sigmoid(activation);
             }
-
+	
+	   #pragma omp parallel for
             for (int j=0; j<numOutputs; j++) {
-
                float  activation=outputLayerBias[j];
+                #pragma omp parallel for reduction (+:activation)
                 for (int k=0; k<numHiddenNodes; k++) {
                     activation+=hiddenLayer[k]*outputWeights[k][j];
                 }
@@ -201,44 +207,46 @@ int main(int argc, const char * argv[]) {
             
            // Backprop
 
-            
+           float  deltaOutput[numOutputs];
 
-
-            float  deltaOutput[numOutputs];
-
-
+	   #pragma omp parallel for
             for (int j=0; j<numOutputs; j++) {
                 float errorOutput = (training_outputs[i][j]-outputLayer[j]);
                 deltaOutput[j] = errorOutput*dSigmoid(outputLayer[j]);
             }
-
             float deltaHidden[numHiddenNodes];
+            #pragma parallel omp for
             for (int j=0; j<numHiddenNodes; j++) {
                 float errorHidden = 0.0f;
+                #pragma omp parallel for reduction (+:errorHidden)        
                 for(int k=0; k<numOutputs; k++) {
                     errorHidden+=deltaOutput[k]*outputWeights[j][k];
                 }
                 deltaHidden[j] = errorHidden*dSigmoid(hiddenLayer[j]);
             }
-
+            #pragma parallel omp for 
             for (int j=0; j<numOutputs; j++) {
                 outputLayerBias[j] += deltaOutput[j]*lr;
-                for (int k=0; k<numHiddenNodes; k++) {
+                #pragma omp parallel for 
+		 for (int k=0; k<numHiddenNodes; k++) {
                     outputWeights[k][j]+=hiddenLayer[k]*deltaOutput[j]*lr;
                 }
             }
-
+	   #pragma omp parallel for
             for (int j=0; j<numHiddenNodes; j++) {
                 hiddenLayerBias[j] += deltaHidden[j]*lr;
+		 #pragma omp parallel for 
                 for(int k=0; k<numInputs; k++) {
                     hiddenWeights[k][j]+=training_inputs[i][k]*deltaHidden[j]*lr;
                 }
             }
         }}
     }
-
+    clock_gettime(CLOCK_MONOTONIC,&end_time);
+   long msec_total = (end_time.tv_sec - start_time_parse.tv_sec)* 1000 + (end_time.tv_nsec - start_time_parse.tv_nsec)/1000000;
+   printf("took to complete whole program %dms\n", msec_total);
     // Print weights
-    std::cout << "Final Hidden Weights\n[ ";
+/**    std::cout << "Final Hidden Weights\n[ ";
     for (int j=0; j<numHiddenNodes; j++) {
         std::cout << "[ ";
         for(int k=0; k<numInputs; k++) {
@@ -247,7 +255,7 @@ int main(int argc, const char * argv[]) {
         std::cout << "] ";
     }
     std::cout << "]\n";
-
+*/
     std::cout << "Final Hidden Biases\n[ ";
     for (int j=0; j<numHiddenNodes; j++) {
         std::cout << hiddenLayerBias[j] << " ";
