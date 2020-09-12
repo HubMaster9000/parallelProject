@@ -46,6 +46,35 @@ void shuffle(int *array, size_t n)
     }
 }
 
+//Assign label for testing accuracy
+float assignLabel( int i, float *testing_input, int numHiddenNodes, int numInputs, float **hiddenWeights, float *hiddenLayer, int numOutputs, float **outputWeights, float *outputLayer) {
+    float label = 0;
+    //Return 1 if x >=0 else return 0
+    for (int j=0; j<numHiddenNodes; j++) {
+
+        float activation = 0;
+            for (int k=0; k<numInputs; k++) {
+            activation += testing_input[k]*hiddenWeights[k][j];;
+        }
+        hiddenLayer[j] = sigmoid(activation);
+    }
+    
+    for (int j=0; j<numOutputs; j++) {
+
+        float activation = 0;
+        for (int k=0; k<numHiddenNodes; k++) {
+            activation += hiddenLayer[k]*outputWeights[k][j];
+        }
+        label = sigmoid(activation);
+    }
+    
+    if ( label > 0 ) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 int main(int argc, const char * argv[]) {
     static const int numHiddenNodes = 2;
 
@@ -67,87 +96,86 @@ int main(int argc, const char * argv[]) {
 
 
     float **hiddenWeights = (float **)malloc(numInputs * sizeof(float *));
-    float outputWeights[numHiddenNodes][numOutputs];
+    float **outputWeights = (float **)malloc(numHiddenNodes * sizeof(float *));  
     float **training_inputs = (float **)malloc(numTrainingSets * sizeof(float *));
     float **training_outputs = (float **) malloc(numTrainingSets * sizeof(float *));;
     float **testing_inputs = (float **)malloc(numTestingSets * sizeof(float *));;
     float **testing_outputs = (float **)malloc(numTestingSets * sizeof(float *));;
-  struct timespec end_time;
+    struct timespec end_time;
     struct timespec start_time;
     struct timespec end_time_parse;
     clock_gettime(CLOCK_MONOTONIC,&start_time);
- std::string train;
-            std::string test;
 
-std::ifstream trainFile("mnist_train.csv");
-            std::getline(trainFile, train);  
- std::ifstream testingFile("mnist_test.csv");
-            std::getline(testingFile, test);    
-// read line by line till end of trainFile
+    std::string train;
+    std::ifstream trainFile("mnist_train.csv");
+    std::getline(trainFile, train);
+
+
+    std::string test;
+    std::ifstream testingFile("mnist_test.csv");
+    std::getline(testingFile, test);
+    
+    //Load training data
+    // read line by line till end of trainFile
     for (int row=0; row < numTrainingSets; ++row) {
-        //Skip first row (headers)
-            std::string trainLine;
-            std::getline(trainFile, trainLine);
-            std::stringstream trainIss(trainLine);
-            //Each row has 785 values, first is label
-            training_inputs[row]= (float *)calloc(numInputs , sizeof(float));;
-            training_outputs[row]=(float *) calloc(numOutputs , sizeof(float));
-            for (int col = 0; col < numInputs; ++col) {
-                std::string trainVal;
-                std::getline(trainIss, trainVal, ',');
-                //Converter converts string to float
-                std::stringstream trainConvertor(trainVal);
-                //Add first 90% of data to training
-                if (col == 0) {
-                    //Add first col to classification
-                    trainConvertor >> training_outputs[row][col];
-                } else {
-                    //Other idxs go to data
-                    trainConvertor >> training_inputs[row][col-1];
-                }
+        std::string trainLine;
+        std::getline(trainFile, trainLine);
+        std::stringstream trainIss(trainLine);
+        //Each row has 785 values, first is label
+        training_inputs[row]= (float *)malloc(numInputs * sizeof(float));;
+        training_outputs[row]=(float *) malloc(numOutputs * sizeof(float));
+        for (int col = 0; col < numInputs; ++col) {
+            std::string trainVal;
+            std::getline(trainIss, trainVal, ',');
+            //Converter converts string to float
+            std::stringstream trainConvertor(trainVal);
+            if (col == 0) {
+                //Add first col to classification
+                trainConvertor >> training_outputs[row][col];
+            } else {
+                //Other idxs go to data
+                trainConvertor >> training_inputs[row][col-1];
             }
         }
-
+}
     //Load testing data
-
-
     // read line by line till end of testing file
     for (int row=0; row < numTestingSets; ++row) {
-        //Skip first row (headers)
-       
-            std::string testLine;
-            std::getline(testingFile, testLine);
-            std::stringstream testIss(testLine);
-            //Each row has 785 values, first is label
-            testing_inputs[row]= (float *)malloc(numInputs * sizeof(float));;
-            testing_outputs[row]= (float *)malloc(numOutputs * sizeof(float));
-            for (int col = 0; col < numInputs+1; ++col) {
-                std::string testVal;
-                std::getline(testIss, testVal, ',');
-                //Converter converts string to float
-                std::stringstream testConvertor(testVal);
-                if (col == 0) {
-                   //Add first col to classification
-                   testConvertor >> testing_outputs[row][col];
-                } else {
-                    //Other idxs go to data
-                    testConvertor >> testing_inputs[row][col-1];
-                }
+        std::string testLine;
+        std::getline(testingFile, testLine);
+
+        std::stringstream testIss(testLine);
+        //Each row has 785 values, first is label
+        testing_inputs[row]= (float *)malloc(numInputs * sizeof(float));;
+        testing_outputs[row]= (float *)malloc(numOutputs * sizeof(float));
+        for (int col = 0; col < numInputs; ++col) {
+            std::string testVal;
+            std::getline(testIss, testVal, ',');
+            //Converter converts string to float
+            std::stringstream testConvertor(testVal);
+            if (col == 0) {
+                //Add first col to classification
+                testConvertor >> testing_outputs[row][col];
+            } else {
+                //Other idxs go to data
+                testConvertor >> testing_inputs[row][col-1];
             }
-        }
+        }}
 
     clock_gettime(CLOCK_MONOTONIC,&end_time_parse);
     long  msec_parse = (end_time_parse.tv_sec - start_time.tv_sec)*1000 + (end_time_parse.tv_nsec - start_time.tv_nsec)/1000000;
-    printf("took to complete parse %dms\n",msec_parse);
 
+    printf("took to complete parse %dms\n",msec_parse);        
+  
     for (int i=0; i<numInputs; i++) {
-            hiddenWeights[i]=(float *) malloc(numHiddenNodes * sizeof(float));
+        hiddenWeights[i]=(float *) malloc(numHiddenNodes * sizeof(float));
 
         for (int j=0; j<numHiddenNodes; j++) {
             hiddenWeights[i][j] = init_weight();
         }
     }
     for (int i=0; i<numHiddenNodes; i++) {
+        outputWeights[i]=(float *) malloc(numOutputs * sizeof(float));
         hiddenLayerBias[i] = init_weight();
         for (int j=0; j<numOutputs; j++) {
             outputWeights[i][j] = init_weight();
@@ -156,15 +184,12 @@ std::ifstream trainFile("mnist_train.csv");
     for (int i=0; i<numOutputs; i++) {
         outputLayerBias[i] = init_weight();
     }
-
-    // int trainingSetOrder[] = {0,1,2,3};
-
+    
+    
     for (int n=0; n < 50; n++) {
-    // shuffle(trainingSetOrder,numTrainingSets);
         for (int x=0; x<numTrainingSets; x++) {
-
+            
             int i = x;
-//            if(i != 0){
             // Forward pass
 
             for (int j=0; j<numHiddenNodes; j++) {
@@ -178,18 +203,12 @@ std::ifstream trainFile("mnist_train.csv");
 
             for (int j=0; j<numOutputs; j++) {
 
-               float  activation=outputLayerBias[j];
+               float activation=outputLayerBias[j];
                 for (int k=0; k<numHiddenNodes; k++) {
                     activation+=hiddenLayer[k]*outputWeights[k][j];
                 }
                 outputLayer[j] = sigmoid(activation);
             }
-
-            //std::cout << "Input:" << training_inputs[i][0] << " " << training_inputs[i][1] << "    Output:" << outputLayer[0] << "    Expected Output: " << training_outputs[i][0] << "\n";
-
-           // Backprop
-
-
             float  deltaOutput[numOutputs];
 
 
@@ -221,20 +240,9 @@ std::ifstream trainFile("mnist_train.csv");
                     hiddenWeights[k][j]+=training_inputs[i][k]*deltaHidden[j]*lr;
                 }
             }
-        }}
-  //  }
-
-    // Print weights
-//    std::cout << "Final Hidden Weights\n[ ";
-  //  for (int j=0; j<numHiddenNodes; j++) {
-    //    std::cout << "[ ";
-      //  for(int k=0; k<numInputs; k++) {
-        //    std::cout << hiddenWeights[k][j] << " ";
-       // }
-       // std::cout << "] ";
-   // }
-   // std::cout << "]\n";
-
+        }
+    }
+    
     std::cout << "Final Hidden Biases\n[ ";
     for (int j=0; j<numHiddenNodes; j++) {
         std::cout << hiddenLayerBias[j] << " ";
@@ -255,8 +263,22 @@ std::ifstream trainFile("mnist_train.csv");
 
     }
     std::cout << "]\n";
+    
+    //Test model for accuracy
+    int correctPredictions = 0;
+    //loop through test data and see if predicted label matches actual label
+    for ( int i = 0; i < numTestingSets; i++ ) {
+        float predictedLabel = assignLabel( i, testing_inputs[i], numHiddenNodes, numInputs, hiddenWeights, hiddenLayer, numOutputs, outputWeights, outputLayer );
+        if ( predictedLabel == testing_outputs[i][0] ) {
+            correctPredictions++;
+        }
+    }
+    float correctPercentage = (correctPredictions / double(numTestingSets)) * 100;
+    printf("Correct Prediction Percentage %.2f% \n", correctPercentage);
+
+
     clock_gettime(CLOCK_MONOTONIC,&end_time);
-    long  msec_total = (end_time.tv_sec - start_time.tv_sec)*1000 + (end_time.tv_nsec - start_time.tv_nsec)/1000000;
-    printf("took to complete whole program %dms\n",msec_total);
-  return 0;
+    long msec_total = (end_time.tv_sec = start_time.tv_sec)*1000 + (end_time.tv_nsec - start_time.tv_nsec)/1000000;
+    printf("took to complete whole program %dms\n", msec_total);
+return 0; 
 }
