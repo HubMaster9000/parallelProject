@@ -50,18 +50,22 @@ void shuffle(int *array, size_t n)
 float assignLabel( int i, float *testing_input, int numHiddenNodes, int numInputs, float **hiddenWeights, float *hiddenLayer, int numOutputs, float **outputWeights, float *outputLayer) {
     float label = 0;
     //Return 1 if x >=0 else return 0
+    #pragma omp parallel for
     for (int j=0; j<numHiddenNodes; j++) {
 
         float activation = 0;
-            for (int k=0; k<numInputs; k++) {
+        #pragma omp parallel for reduction (+:activation)
+        for (int k=0; k<numInputs; k++) {
             activation += testing_input[k]*hiddenWeights[k][j];;
         }
         hiddenLayer[j] = sigmoid(activation);
     }
     
+    #pragma omp parallel for
     for (int j=0; j<numOutputs; j++) {
 
         float activation = 0;
+        #pragma omp parallel for reduction (+:activation)
         for (int k=0; k<numHiddenNodes; k++) {
             activation += hiddenLayer[k]*outputWeights[k][j];
         }
@@ -221,7 +225,7 @@ int main(int argc, const char * argv[]) {
                 hiddenLayer[j] = sigmoid(activation);
             }
 	
-	    #pragma omp parallel for
+	        #pragma omp parallel for
             for (int j=0; j<numOutputs; j++) {
                 float  activation=outputLayerBias[j];
                 #pragma omp parallel for reduction (+:activation)
@@ -306,10 +310,11 @@ int main(int argc, const char * argv[]) {
     //Test model for accuracy
     int correctPredictions = 0;
     //loop through test data and see if predicted label matches actual label
+    #pragma omp parallel for reduction (+:correctPredictions)
     for ( int i = 0; i < numTestingSets; i++ ) {
         float predictedLabel = assignLabel( i, testing_inputs[i], numHiddenNodes, numInputs, hiddenWeights, hiddenLayer, numOutputs, outputWeights, outputLayer );
         if ( predictedLabel == testing_outputs[i][0] ) {
-            correctPredictions++;
+            correctPredictions += 1;
         }
     }
     float correctPercentage = (correctPredictions / double(numTestingSets)) * 100;
