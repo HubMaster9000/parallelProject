@@ -46,8 +46,37 @@ void shuffle(int *array, size_t n)
     }
 }
 
+//Assign label for testing accuracy
+float assignLabel( int i, float *testing_input, int numHiddenNodes, int numInputs, float **hiddenWeights, float *hiddenLayer, int numOutputs, float **outputWeights, float *outputLayer) {
+    float label = 0;
+    //Return 1 if x >=0 else return 0
+    for (int j=0; j<numHiddenNodes; j++) {
+
+        float activation = 0;
+            for (int k=0; k<numInputs; k++) {
+            activation += testing_input[k]*hiddenWeights[k][j];;
+        }
+        hiddenLayer[j] = sigmoid(activation);
+    }
+    
+    for (int j=0; j<numOutputs; j++) {
+
+        float activation = 0;
+        for (int k=0; k<numHiddenNodes; k++) {
+            activation += hiddenLayer[k]*outputWeights[k][j];
+        }
+        label = sigmoid(activation);
+    }
+    
+    if ( label > 0 ) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 int main(int argc, const char * argv[]) {
-     static const int numHiddenNodes = 2;
+    static const int numHiddenNodes = 2;
 
     const float lr = 0.1f;
 
@@ -67,104 +96,102 @@ int main(int argc, const char * argv[]) {
 
 
     float **hiddenWeights = (float **)malloc(numInputs * sizeof(float *));
-    float outputWeights[numHiddenNodes][numOutputs];
+    float **outputWeights = (float **)malloc(numHiddenNodes * sizeof(float *));
+    //float outputWeights[numHiddenNodes][numOutputs];
     float **training_inputs = (float **)malloc(numTrainingSets * sizeof(float *));
     float **training_outputs = (float **) malloc(numTrainingSets * sizeof(float *));;
     float **testing_inputs = (float **)malloc(numTestingSets * sizeof(float *));;
     float **testing_outputs = (float **)malloc(numTestingSets * sizeof(float *));;
-    struct timespec start_time_parse;
+    struct timespec end_time;
+    struct timespec start_time;
     struct timespec end_time_parse;
-    clock_gettime(CLOCK_MONOTONIC,&start_time_parse);
-    //Load training data
+    clock_gettime(CLOCK_MONOTONIC,&start_time);
+
+    std::string train;
     std::ifstream trainFile("mnist_train.csv");
+    std::getline(trainFile, train);
+
+
+    std::string test;
+    std::ifstream testingFile("mnist_test.csv");
+    std::getline(testingFile, test);
+
+    //Load training data
     // read line by line till end of trainFile
-   // #pragma omp parallel for
-    for (int row=0; row < numTrainingSets+1; ++row) {
-        //Skip first row (headers)
-        if ( row != 0 ) {
-            std::string trainLine;
-       	    #pragma omp critical
-            {
-              std::getline(trainFile, trainLine);
-            }     
-    if ( !trainFile.good() ) {
-                break;
-            }
-            std::stringstream trainIss(trainLine);
-            //Each row has 785 values, first is label
-            training_inputs[row]= (float *)malloc(numInputs * sizeof(float));;
-            training_outputs[row]=(float *) malloc(numOutputs * sizeof(float));
-            for (int col = 0; col < numInputs+1; ++col) {
-                std::string trainVal;
-                std::getline(trainIss, trainVal, ',');
-                //Converter converts string to float
-                std::stringstream trainConvertor(trainVal);
-                //Add first 90% of data to training
-                if (col == 0) {
-                    //Add first col to classification
-                    trainConvertor >> training_outputs[row][col];
-                } else {
-                    //Other idxs go to data
-                    trainConvertor >> training_inputs[row][col-1];
-                }
+    // #pragma omp parallel for
+    for (int row=0; row < numTrainingSets; ++row) {
+        std::string trainLine;
+        #pragma omp critical
+        {
+            std::getline(trainFile, trainLine);
+        }
+        std::stringstream trainIss(trainLine);
+        //Each row has 785 values, first is label
+        training_inputs[row]= (float *)malloc(numInputs * sizeof(float));;
+        training_outputs[row]=(float *) malloc(numOutputs * sizeof(float));
+        for (int col = 0; col < numInputs; ++col) {
+            std::string trainVal;
+            std::getline(trainIss, trainVal, ',');
+            //Converter converts string to float
+            std::stringstream trainConvertor(trainVal);
+            if (col == 0) {
+                //Add first col to classification
+                trainConvertor >> training_outputs[row][col];
+            } else {
+                //Other idxs go to data
+                trainConvertor >> training_inputs[row][col-1];
             }
         }
     }
 
     //Load testing data
-    std::ifstream testingFile("mnist_test.csv");
     // read line by line till end of testing file
-  // #pragma omp parallel for
-    for (int row=0; row < numTestingSets+1; ++row) {
-        //Skip first row (headers)
-        if ( row != 0 ) {
-            std::string testLine;
-            #pragma omp critical
-            {
-	      std::getline(testingFile, testLine);
-            }
-	     if ( !testingFile.good() ) {
-                break;
-            }
-            std::stringstream testIss(testLine);
-            //Each row has 785 values, first is label
-            testing_inputs[row]= (float *)malloc(numInputs * sizeof(float));;
-            testing_outputs[row]= (float *)malloc(numOutputs * sizeof(float));
-            for (int col = 0; col < numInputs+1; ++col) {
-                std::string testVal;
-                std::getline(testIss, testVal, ',');
-                //Converter converts string to float
-                std::stringstream testConvertor(testVal);
-                if (col == 0) {
-                   //Add first col to classification
-                   testConvertor >> testing_outputs[row][col];
-                } else {
-                    //Other idxs go to data
-                    testConvertor >> testing_inputs[row][col-1];
-                }
+    // #pragma omp parallel for
+    for (int row=0; row < numTestingSets; ++row) {
+        std::string testLine;
+        #pragma omp critical
+        {
+            std::getline(testingFile, testLine);
+        }
+        std::stringstream testIss(testLine);
+        //Each row has 785 values, first is label
+        testing_inputs[row]= (float *)malloc(numInputs * sizeof(float));;
+        testing_outputs[row]= (float *)malloc(numOutputs * sizeof(float));
+        for (int col = 0; col < numInputs; ++col) {
+            std::string testVal;
+            std::getline(testIss, testVal, ',');
+            //Converter converts string to float
+            std::stringstream testConvertor(testVal);
+            if (col == 0) {
+                //Add first col to classification
+                testConvertor >> testing_outputs[row][col];
+            } else {
+                //Other idxs go to data
+                testConvertor >> testing_inputs[row][col-1];
             }
         }
     }
 
     clock_gettime(CLOCK_MONOTONIC,&end_time_parse);
-    long  msec_parse = (end_time_parse.tv_sec - start_time_parse.tv_sec)*1000 + (end_time_parse.tv_nsec - start_time_parse.tv_nsec)/1000000;
+    long  msec_parse = (end_time_parse.tv_sec - start_time.tv_sec)*1000 + (end_time_parse.tv_nsec - start_time.tv_nsec)/1000000;
     printf("took to complete parse %dms\n",msec_parse);        
-    struct timespec start_time;
-    struct timespec end_time;
-    clock_gettime(CLOCK_MONOTONIC,&start_time);
+    //struct timespec start_time;
+    //struct timespec end_time;
+    //clock_gettime(CLOCK_MONOTONIC,&start_time);
     #pragma parallel omp for
     for (int i=0; i<numInputs; i++) {
-            hiddenWeights[i]=(float *) malloc(numHiddenNodes * sizeof(float));
+        hiddenWeights[i]=(float *) malloc(numHiddenNodes * sizeof(float));
 	#pragma omp parallel for
         for (int j=0; j<numHiddenNodes; j++) {
             hiddenWeights[i][j] = init_weight();
         }
     }
-   #pragma omp parallel for
+    #pragma omp parallel for
     for (int i=0; i<numHiddenNodes; i++) {
+        outputWeights[i]=(float *) malloc(numOutputs * sizeof(float));
         hiddenLayerBias[i] = init_weight();
         #pragma omp parallel for
-	 for (int j=0; j<numOutputs; j++) {
+	    for (int j=0; j<numOutputs; j++) {
             outputWeights[i][j] = init_weight();
         }
     }
@@ -175,28 +202,28 @@ int main(int argc, const char * argv[]) {
     
     // int trainingSetOrder[] = {0,1,2,3};
 
-   //cannot parallelize this bc each epoch relies on the last    
-    for (int n=0; n < 100; n++) {
+    //cannot parallelize this bc each epoch relies on the last    
+    for (int n=0; n < 20; n++) {
     // shuffle(trainingSetOrder,numTrainingSets);
 	#pragma omp parallel for
-        for (int x=0; x<numTrainingSets + 1; x++) {
+        for (int x=0; x<numTrainingSets; x++) {
             
             int i = x;
-            if(i != 0){
+
             // Forward pass
-	   #pragma omp parallel for
+	        #pragma omp parallel for
             for (int j=0; j<numHiddenNodes; j++) {
-               float activation=hiddenLayerBias[j];
-		#pragma omp parallel for reduction (+:activation)
-                 for (int k=0; k<numInputs; k++) {
+                float activation=hiddenLayerBias[j];
+		        #pragma omp parallel for reduction (+:activation)
+                for (int k=0; k<numInputs; k++) {
                     activation+=training_inputs[i][k]*hiddenWeights[k][j];
                 }
                 hiddenLayer[j] = sigmoid(activation);
             }
 	
-	   #pragma omp parallel for
+	    #pragma omp parallel for
             for (int j=0; j<numOutputs; j++) {
-               float  activation=outputLayerBias[j];
+                float  activation=outputLayerBias[j];
                 #pragma omp parallel for reduction (+:activation)
                 for (int k=0; k<numHiddenNodes; k++) {
                     activation+=hiddenLayer[k]*outputWeights[k][j];
@@ -209,7 +236,7 @@ int main(int argc, const char * argv[]) {
 
            float  deltaOutput[numOutputs];
 
-	   #pragma omp parallel for
+	        #pragma omp parallel for
             for (int j=0; j<numOutputs; j++) {
                 float errorOutput = (training_outputs[i][j]-outputLayer[j]);
                 deltaOutput[j] = errorOutput*dSigmoid(outputLayer[j]);
@@ -228,23 +255,23 @@ int main(int argc, const char * argv[]) {
             for (int j=0; j<numOutputs; j++) {
                 outputLayerBias[j] += deltaOutput[j]*lr;
                 #pragma omp parallel for 
-		 for (int k=0; k<numHiddenNodes; k++) {
+		        for (int k=0; k<numHiddenNodes; k++) {
                     outputWeights[k][j]+=hiddenLayer[k]*deltaOutput[j]*lr;
                 }
             }
-	   #pragma omp parallel for
+	        #pragma omp parallel for
             for (int j=0; j<numHiddenNodes; j++) {
                 hiddenLayerBias[j] += deltaHidden[j]*lr;
-		 #pragma omp parallel for 
+		        #pragma omp parallel for 
                 for(int k=0; k<numInputs; k++) {
                     hiddenWeights[k][j]+=training_inputs[i][k]*deltaHidden[j]*lr;
                 }
             }
-        }}
+        }
     }
-    clock_gettime(CLOCK_MONOTONIC,&end_time);
-   long msec_total = (end_time.tv_sec - start_time_parse.tv_sec)* 1000 + (end_time.tv_nsec - start_time_parse.tv_nsec)/1000000;
-   printf("took to complete whole program %dms\n", msec_total);
+    //clock_gettime(CLOCK_MONOTONIC,&end_time);
+    //long msec_total = (end_time.tv_sec - start_time_parse.tv_sec)* 1000 + (end_time.tv_nsec - start_time_parse.tv_nsec)/1000000;
+    //printf("took to complete whole program %dms\n", msec_total);
     // Print weights
 /**    std::cout << "Final Hidden Weights\n[ ";
     for (int j=0; j<numHiddenNodes; j++) {
@@ -275,5 +302,21 @@ int main(int argc, const char * argv[]) {
         std::cout << outputLayerBias[j] << " ";
     }
     std::cout << "]\n";
-    return 0;
+    
+    //Test model for accuracy
+    int correctPredictions = 0;
+    //loop through test data and see if predicted label matches actual label
+    for ( int i = 0; i < numTestingSets; i++ ) {
+        float predictedLabel = assignLabel( i, testing_inputs[i], numHiddenNodes, numInputs, hiddenWeights, hiddenLayer, numOutputs, outputWeights, outputLayer );
+        if ( predictedLabel == testing_outputs[i][0] ) {
+            correctPredictions++;
+        }
+    }
+    float correctPercentage = (correctPredictions / double(numTestingSets)) * 100;
+    printf("Correct Prediction Percentage %.2f% \n", correctPercentage);
+
+
+    clock_gettime(CLOCK_MONOTONIC,&end_time);
+    long msec_total = (end_time.tv_sec = start_time.tv_sec)*1000 + (end_time.tv_nsec - start_time.tv_nsec)/1000000;
+    printf("took to complete whole program %dms\n", msec_total);
 }
