@@ -207,7 +207,7 @@ int main(int argc, const char * argv[]) {
     // int trainingSetOrder[] = {0,1,2,3};
 
     //cannot parallelize this bc each epoch relies on the last    
-    for (int n=0; n < 20; n++) {
+    for (int n=0; n < 50; n++) {
     // shuffle(trainingSetOrder,numTrainingSets);
 	#pragma omp parallel for
         for (int x=0; x<numTrainingSets; x++) {

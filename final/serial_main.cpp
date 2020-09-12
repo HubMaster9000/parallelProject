@@ -189,7 +189,7 @@ int main(int argc, const char * argv[]) {
     
     // int trainingSetOrder[] = {0,1,2,3};
     
-    for (int n=0; n < 20; n++) {
+    for (int n=0; n < 50; n++) {
     // shuffle(trainingSetOrder,numTrainingSets);
         for (int x=0; x<numTrainingSets; x++) {
             
