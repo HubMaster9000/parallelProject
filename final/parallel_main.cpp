@@ -101,7 +101,6 @@ int main(int argc, const char * argv[]) {
 
     float **hiddenWeights = (float **)malloc(numInputs * sizeof(float *));
     float **outputWeights = (float **)malloc(numHiddenNodes * sizeof(float *));
-    //float outputWeights[numHiddenNodes][numOutputs];
     float **training_inputs = (float **)malloc(numTrainingSets * sizeof(float *));
     float **training_outputs = (float **) malloc(numTrainingSets * sizeof(float *));;
     float **testing_inputs = (float **)malloc(numTestingSets * sizeof(float *));;
@@ -204,11 +203,9 @@ int main(int argc, const char * argv[]) {
         outputLayerBias[i] = init_weight();
     }
     
-    // int trainingSetOrder[] = {0,1,2,3};
 
     //cannot parallelize this bc each epoch relies on the last    
-    for (int n=0; n < 50; n++) {
-    // shuffle(trainingSetOrder,numTrainingSets);
+    for (int n=0; n < 100; n++) {
 	#pragma omp parallel for
         for (int x=0; x<numTrainingSets; x++) {
             
@@ -234,7 +231,6 @@ int main(int argc, const char * argv[]) {
                 }
                 outputLayer[j] = sigmoid(activation);
             }
-            //std::cout << "Input:" << training_inputs[i][0] << " " << training_inputs[i][1] << "    Output:" << outputLayer[0] << "    Expected Output: " << training_outputs[i][0] << "\n";
             
            // Backprop
 
@@ -273,20 +269,7 @@ int main(int argc, const char * argv[]) {
             }
         }
     }
-    //clock_gettime(CLOCK_MONOTONIC,&end_time);
-    //long msec_total = (end_time.tv_sec - start_time_parse.tv_sec)* 1000 + (end_time.tv_nsec - start_time_parse.tv_nsec)/1000000;
-    //printf("took to complete whole program %dms\n", msec_total);
-    // Print weights
-/**    std::cout << "Final Hidden Weights\n[ ";
-    for (int j=0; j<numHiddenNodes; j++) {
-        std::cout << "[ ";
-        for(int k=0; k<numInputs; k++) {
-            std::cout << hiddenWeights[k][j] << " ";
-        }
-        std::cout << "] ";
-    }
-    std::cout << "]\n";
-*/
+
     std::cout << "Final Hidden Biases\n[ ";
     for (int j=0; j<numHiddenNodes; j++) {
         std::cout << hiddenLayerBias[j] << " ";
