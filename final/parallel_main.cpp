@@ -1,12 +1,12 @@
 #include <iostream>
 #include <list>
+#include <omp.h>
 #include <cstdlib>
 #include <math.h>
 #include <time.h>
 #include <fstream>
 #include <sstream>
 #include <iostream>
-
 
 float  sigmoid(float x) { return 1 / (1 + exp(-x)); }
 float dSigmoid(float x) { return x * (1 - x); }
@@ -27,7 +27,8 @@ void shuffle(int *array, size_t n)
 }
 
 int main(int argc, const char * argv[]) {
-    static const int numHiddenNodes = 2;
+     static const int numHiddenNodes = 2;
+
 
     const float lr = 0.1f;
 
@@ -38,7 +39,7 @@ int main(int argc, const char * argv[]) {
     static const int numInputs = 785;
     //Training data has 60k values.
     static const int numTrainingSets = 60000;
-    static const int numTestingSets = 1000;
+    static const int numTestingSets = 10000;
     float hiddenLayer[numHiddenNodes];
     float outputLayer[numOutputs];
 
@@ -46,41 +47,49 @@ int main(int argc, const char * argv[]) {
     float outputLayerBias[numOutputs];
 
 
-    float **hiddenWeights = (float **)calloc(numInputs , sizeof(float *));
+    float **hiddenWeights = (float **)malloc(numInputs * sizeof(float *));
     float outputWeights[numHiddenNodes][numOutputs];
-    float **training_inputs = (float **)calloc(numTrainingSets ,sizeof(float *));
-    float **training_outputs = (float **) calloc(numTrainingSets , sizeof(float *));;
-    float **testing_inputs = (float **)calloc(numTestingSets , sizeof(float *));;
-    float **testing_outputs = (float **)calloc(numTestingSets , sizeof(float *));;
-  struct timespec end_time;
+    float **training_inputs = (float **)malloc(numTrainingSets * sizeof(float *));
+    float **training_outputs = (float **) malloc(numTrainingSets * sizeof(float *));;
+    float **testing_inputs = (float **)malloc(numTestingSets * sizeof(float *));;
+    float **testing_outputs = (float **)malloc(numTestingSets * sizeof(float *));;
     struct timespec start_time;
     struct timespec end_time_parse;
+	struct timespec end_time;
     clock_gettime(CLOCK_MONOTONIC,&start_time);
-    //Load training data
-  
-//Load training data
-
+//Load training datai
   std::ifstream trainFile("mnist_train.csv");
-  // read line by line till end of trainFile
-#pragma omp parallel for 
-  for (int row=0; row < numTrainingSets+1; ++row) {
-    //Skip first row (headers)
-      if ( row != 0 ) {
-          std::string trainLine;
-
-#pragma omp critical
+               std::ifstream testingFile("mnist_test.csv");
+         std::string train;
+          std::getline(trainFile, train);
+         std::string test;
+          std::getline(testingFile, test);
+#pragma omp parallel shared(testingFile, trainFile) 
 {
-          std::getline(trainFile, trainLine);
- }
-         if (trainFile.good() ) continue; 
 
+#pragma omp for 
+for (int row=0; row < numTrainingSets;  ++row) {
+    //Skip first row (headers)
+
+      //if ( row != 0 ) {
+         std::string trainLine;
+
+#pragma omp critical (train_)
+{
+
+          std::getline(trainFile, trainLine);
+ } 
+
+//         if (trainFile.good() ) continue; 
           std::stringstream trainIss(trainLine);
           //Each row has 785 values, first is label
-        training_inputs[row]= (float *)calloc(numInputs , sizeof(float));;
-        training_outputs[row]=(float *) calloc(numOutputs , sizeof(float));
-          for (int col = 0; col < numInputs+1; ++col) {
+        training_inputs[row]= (float *)malloc(numInputs *sizeof(float));;
+        training_outputs[row]=(float *) malloc(numOutputs * sizeof(float));
+          for (int col = 0; col < numInputs; ++col) {
               std::string trainVal;
-              std::getline(trainIss, trainVal, ',');
+        
+                std::getline(trainIss, trainVal, ',');
+
               //Converter converts string to double
               std::stringstream trainConvertor(trainVal);
               //Add first 90% of data to training
@@ -90,30 +99,26 @@ int main(int argc, const char * argv[]) {
               } else {
                   //Other idxs go to data
                   trainConvertor >> training_inputs[row][col-1];
-              }
+              //}
             }
         }
     }
-
-
-             //Load testing data
-               std::ifstream testingFile("mnist_test.csv");
-               // read line by line till end of testing file
-#pragma omp for parallel
-              for (int row=0; row < numTestingSets+1; ++row) {
+ 
+#pragma omp for 
+              for (int row=0; row < numTestingSets; ++row) {
                    //Skip first row (headers)
-                   if ( row != 0 ) {
+            //       if ( row != 0 ) {
                        std::string testLine;
-			#pragma omp critical
+			#pragma omp critical (test_)
 			{
                        std::getline(testingFile, testLine);
-        			}               
-	if ( testingFile.good() ) continue; 
-                       std::stringstream testIss(testLine);
+			}
+//	if ( testingFile.good() ) continue;                       
+std::stringstream testIss(testLine);
                        //Each row has 785 values, first is label
-          testing_inputs[row]= (float *)calloc(numInputs , sizeof(float));;
-               testing_outputs[row]= (float *)calloc(numOutputs , sizeof(float));       
-	        for (int col = 0; col < numInputs+1; ++col) {
+          testing_inputs[row]= (float *)malloc(numInputs * sizeof(float));;
+               testing_outputs[row]= (float *)malloc(numOutputs * sizeof(float));       
+	        for (int col = 0; col < numInputs; ++col) {
                 std::string testVal;
                 std::getline(testIss, testVal, ',');
                 //Converter converts string to double
@@ -125,15 +130,15 @@ int main(int argc, const char * argv[]) {
                     //Other idxs go to data
                     testConvertor >> testing_inputs[row][col-1];
                 }
-            }
+            
         }
-    
+    }
 
 }
-    clock_gettime(CLOCK_MONOTONIC,&end_time_parse);
+    
+clock_gettime(CLOCK_MONOTONIC,&end_time_parse);
     long  msec_parse = (end_time_parse.tv_sec - start_time.tv_sec)*1000 + (end_time_parse.tv_nsec - start_time.tv_nsec)/1000000;
-    printf("took to complete parse %dms\n",msec_parse);
-
+    printf("took to complete parse %dms\n",msec_parse);        
     for (int i=0; i<numInputs; i++) {
             hiddenWeights[i]=(float *) malloc(numHiddenNodes * sizeof(float));
 
@@ -150,15 +155,15 @@ int main(int argc, const char * argv[]) {
     for (int i=0; i<numOutputs; i++) {
         outputLayerBias[i] = init_weight();
     }
-
+    
     // int trainingSetOrder[] = {0,1,2,3};
 
     for (int n=0; n < 50; n++) {
     // shuffle(trainingSetOrder,numTrainingSets);
-        for (int x=0; x<numTrainingSets + 1; x++) {
-
+        for (int x=0; x<numTrainingSets; x++) {
+            
             int i = x;
-            if(i != 0){
+    //        if(i != 0){
             // Forward pass
 
             for (int j=0; j<numHiddenNodes; j++) {
@@ -178,10 +183,11 @@ int main(int argc, const char * argv[]) {
                 }
                 outputLayer[j] = sigmoid(activation);
             }
-
             //std::cout << "Input:" << training_inputs[i][0] << " " << training_inputs[i][1] << "    Output:" << outputLayer[0] << "    Expected Output: " << training_outputs[i][0] << "\n";
-
+            
            // Backprop
+
+            
 
 
             float  deltaOutput[numOutputs];
@@ -191,7 +197,6 @@ int main(int argc, const char * argv[]) {
                 float errorOutput = (training_outputs[i][j]-outputLayer[j]);
                 deltaOutput[j] = errorOutput*dSigmoid(outputLayer[j]);
             }
-
 
             float deltaHidden[numHiddenNodes];
             for (int j=0; j<numHiddenNodes; j++) {
@@ -216,7 +221,7 @@ int main(int argc, const char * argv[]) {
                 }
             }
         }}
-    }
+   
 
     // Print weights
 //    std::cout << "Final Hidden Weights\n[ ";
@@ -246,12 +251,11 @@ int main(int argc, const char * argv[]) {
     std::cout << "Final Output Biases\n[ ";
     for (int j=0; j<numOutputs; j++) {
         std::cout << outputLayerBias[j] << " ";
-
     }
     std::cout << "]\n";
     clock_gettime(CLOCK_MONOTONIC,&end_time);
     long  msec_total = (end_time.tv_sec - start_time.tv_sec)*1000 + (end_time.tv_nsec - start_time.tv_nsec)/1000000;
-    printf("took to complete whole program %dms\n",msec_parse);
+    printf("took to complete whole program %dms\n",msec_total);
 
 return 0;
 }

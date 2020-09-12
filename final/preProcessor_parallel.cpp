@@ -32,10 +32,14 @@ int main() {
   struct timespec start_time_parse;
          struct timespec end_time_parse;
          clock_gettime(CLOCK_MONOTONIC,&start_time_parse);
-  //Load training data
-  std::ifstream trainFile("mnist_train.csv");
+                 std::ifstream testingFile("mnist_test.csv");
+ std::ifstream trainFile("mnist_train.csv");
+
+//Load training data
+// std::ifstream trainFile("mnist_train.csv");
   // read line by line till end of trainFile
-#pragma omp parallel for 
+#pragma omp parallel 
+#pragma omp for schedule(dynamic) nowait
   for (int row=0; row < numTrainingSets+1; ++row) {
     //Skip first row (headers)
       if ( row != 0 ) {
@@ -45,7 +49,7 @@ int main() {
 {
           std::getline(trainFile, trainLine);
  }
-         if (trainFile.good() ) continue; 
+//         if (trainFile.good() ) continue; 
 
           std::stringstream trainIss(trainLine);
           //Each row has 785 values, first is label
@@ -68,19 +72,21 @@ int main() {
         }
     }
 
-               //Load testing data
-               std::ifstream testingFile("mnist_test.csv");
+
+             //Load testing data
+              // std::ifstream testingFile("mnist_test.csv");
                // read line by line till end of testing file
-#pragma omp parallel for
+//#pragma omp for  schedule(dynamic) nowait
               for (int row=0; row < numTestingSets+1; ++row) {
                    //Skip first row (headers)
                    if ( row != 0 ) {
                        std::string testLine;
-			#pragma omp critical
-			{
-                       std::getline(testingFile, testLine);
-        			}               
-	if ( testingFile.good() ) continue; 
+//			#pragma omp critical
+//			{
+  //                     std::getline(testingFile, testLine);
+    //    			}               
+//         if (trainFile.good() ) continue; 
+
                        std::stringstream testIss(testLine);
                        //Each row has 785 values, first is label
           testing_inputs[row]= (float *)malloc(numInputs * sizeof(float));;
@@ -100,8 +106,7 @@ int main() {
             }
         }
     }
-
-    clock_gettime(CLOCK_MONOTONIC,&end_time_parse);
+ clock_gettime(CLOCK_MONOTONIC,&end_time_parse);
     long  msec = (end_time_parse.tv_sec - start_time_parse.tv_sec)*1000 + (end_time_parse.tv_nsec - start_time_parse.tv_nsec)/1000000;
     printf("took to complete parse %dms\n",msec);
     return 0;
