@@ -263,7 +263,9 @@ int main(int argc, const char * argv[]) {
 
     }
     std::cout << "]\n";
-    
+    struct timespec start_test; 
+    clock_gettime(CLOCK_MONOTONIC,&start_test);
+
     //Test model for accuracy
     int correctPredictions = 0;
     //loop through test data and see if predicted label matches actual label
@@ -278,7 +280,9 @@ int main(int argc, const char * argv[]) {
 
 
     clock_gettime(CLOCK_MONOTONIC,&end_time);
-    long msec_total = (end_time.tv_sec = start_time.tv_sec)*1000 + (end_time.tv_nsec - start_time.tv_nsec)/1000000;
+  long msec_test = (end_time.tv_sec - start_test.tv_sec)*1000 + (end_time.tv_nsec - start_test.tv_nsec)/1000000;
+    printf("took to complete test %dms\n", msec_test);
+    long msec_total = (end_time.tv_sec - start_time.tv_sec)*1000 + (end_time.tv_nsec - start_time.tv_nsec)/1000000;
     printf("took to complete whole program %dms\n", msec_total);
 return 0; 
 }

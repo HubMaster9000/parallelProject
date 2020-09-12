@@ -118,20 +118,20 @@ int main(int argc, const char * argv[]) {
     std::string test;
     std::ifstream testingFile("mnist_test.csv");
     std::getline(testingFile, test);
-	        std::string trainLine;
-        std::string testLine;
+//	        std::string trainLine;
+  //      std::string testLine;
 //	Char
     //Load training data
     // read line by line till end of trainFile
-#pragma omp parallel shared(testingFile, trainFile) private(testLine,trainLine)
-{
-#pragma omp single
-{
-#pragma omp task
-{
-
+//#pragma omp parallel shared(testingFile, trainFile)
+//{
+//#pragma omp single
+//{
+//#pragma omp task
+//{
+//#pragma omp parallel for shared(trainFile)
     for (int row= 0; row < numTrainingSets; ++row) {
-        //std::string trainLine;
+        std::string trainLine;
 //        #pragma omp critical
   //      {
             std::getline(trainFile, trainLine);
@@ -156,16 +156,16 @@ int main(int argc, const char * argv[]) {
         }
     }
 }
- #pragma omp task
-{
+// #pragma omp task
+//{
     // read line by line till end of testing file
-//    #pragma omp for schedule(static)
+//    #pragma omp parallel for shared(testingFile)
     for (int row=0; row < numTestingSets; ++row) {
-        //std::string testLine;
-      //  #pragma omp critical
-       // {
+        std::string testLine;
+  //      #pragma omp critical
+    //    {
             std::getline(testingFile, testLine);
-       // }
+      //  }
         std::stringstream testIss(testLine);
         //Each row has 785 values, first is label
         testing_inputs[row]= (float *)malloc(numInputs * sizeof(float));;
@@ -184,9 +184,7 @@ int main(int argc, const char * argv[]) {
             }
         }
     }
-}
-}
-}
+
     clock_gettime(CLOCK_MONOTONIC,&end_time_parse);
     long  msec_parse = (end_time_parse.tv_sec - start_time.tv_sec)*1000 + (end_time_parse.tv_nsec - start_time.tv_nsec)/1000000;
     printf("took to complete parse %dms\n",msec_parse);        
@@ -304,7 +302,9 @@ int main(int argc, const char * argv[]) {
         std::cout << outputLayerBias[j] << " ";
     }
     std::cout << "]\n";
-    
+    struct timespec testStart; 
+    clock_gettime(CLOCK_MONOTONIC,&testStart);
+
     //Test model for accuracy
     int correctPredictions = 0;
     //loop through test data and see if predicted label matches actual label
@@ -320,7 +320,9 @@ int main(int argc, const char * argv[]) {
 
 
     clock_gettime(CLOCK_MONOTONIC,&end_time);
-    long msec_total = (end_time.tv_sec = start_time.tv_sec)*1000 + (end_time.tv_nsec - start_time.tv_nsec)/1000000;
+long msec_test = (end_time.tv_sec - testStart.tv_sec)*1000 + (end_time.tv_nsec - testStart.tv_nsec)/1000000;
+    printf("took to complete test  %dms\n", msec_test);
+    long msec_total = (end_time.tv_sec - start_time.tv_sec)*1000 + (end_time.tv_nsec - start_time.tv_nsec)/1000000;
     printf("took to complete whole program %dms\n", msec_total);
 }
 
