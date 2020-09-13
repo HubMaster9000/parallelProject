@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdlib>
 #include <list>
 #include <omp.h>
 #include <cstdlib>
@@ -77,10 +78,13 @@ float assignLabel( int i, float *testing_input, int numHiddenNodes, int numInput
     }
 }
 
-int main(int argc, const char * argv[]) {
+int main(int argc,  char* argv[]) {
     static const int numHiddenNodes = 2;
+	printf("argc = %d", argc); 
+std::istringstream ss(argv[1]);
 
-
+int it;
+ss>>it;
     const float lr = 0.1f;
 
 
@@ -154,7 +158,7 @@ int main(int argc, const char * argv[]) {
                 trainConvertor >> training_inputs[row][col-1];
             }
         }
-    }
+ //   }
 }
 // #pragma omp task
 //{
@@ -215,9 +219,8 @@ int main(int argc, const char * argv[]) {
     }
     
 
-    //cannot parallelize this bc each epoch relies on the last    
-    for (int n=0; n < 50; n++) {
-	#pragma omp parallel for
+    for (int n=0; n < it; n++) {	
+#pragma omp parallel for
         for (int x=0; x<numTrainingSets; x++) {
             
             int i = x;

@@ -75,9 +75,12 @@ float assignLabel( int i, float *testing_input, int numHiddenNodes, int numInput
     }
 }
 
-int main(int argc, const char * argv[]) {
+int main(int argc, const char* argv[]) {
     static const int numHiddenNodes = 2;
+std::istringstream ss(argv[1]);
 
+int it; 
+ss>>it; 
     const float lr = 0.1f;
 
 
@@ -185,8 +188,7 @@ int main(int argc, const char * argv[]) {
         outputLayerBias[i] = init_weight();
     }
     
-    
-    for (int n=0; n < 50; n++) {
+for (int n=0; n < it; n++) {
         for (int x=0; x<numTrainingSets; x++) {
             
             int i = x;
